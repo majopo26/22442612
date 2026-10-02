@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<style>body{margin:0}</style>
+<title>Matt's Flight Schedule</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: compact "where is he now" board, then the month calendar with one colored bar per trip, then the selected trip's flights. */
+:root {
+  --bg: #EDF0F2;
+  --surface: #FFFFFF;
+  --ink: #101C28;
+  --muted: #566472;
+  --line: #CFD6DC;
+  --air: #C2410C;
+  --air-soft: #FDEADF;
+  --on-air: #FFFFFF;
+  --ground: #0F6B5F;
+  --t0: #1D5FA8; --t1: #8A3FA0; --t2: #0F6B5F; --t3: #B4531A; --t4: #A12D4B; --t5: #5B6B1F;
+  --on-t: #FFFFFF;
+  --today: #FFF3C4;
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0C141C; --surface: #141F2A; --ink: #E7EDF2; --muted: #93A2B0; --line: #263544;
+    --air: #FF8A4C; --air-soft: #3A2315; --on-air: #1A0D04; --ground: #4FD1BC;
+    --t0: #7DB4F0; --t1: #D3A0E6; --t2: #4FD1BC; --t3: #F2A36B; --t4: #F08FA9; --t5: #BFD36A;
+    --on-t: #0B1218; --today: #3A3414;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0C141C; --surface: #141F2A; --ink: #E7EDF2; --muted: #93A2B0; --line: #263544;
+  --air: #FF8A4C; --air-soft: #3A2315; --on-air: #1A0D04; --ground: #4FD1BC;
+  --t0: #7DB4F0; --t1: #D3A0E6; --t2: #4FD1BC; --t3: #F2A36B; --t4: #F08FA9; --t5: #BFD36A;
+  --on-t: #0B1218; --today: #3A3414;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.45; padding-inline: 16px; padding-block: 20px 40px; }
+.wrap { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; text-wrap: balance; }
+.top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.top h1 { font-size: 30px; letter-spacing: .01em; }
+.clock { font-family: var(--font-data); font-size: 12px; color: var(--muted); }
+.eyebrow { font-family: var(--font-data); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+
+/* now board */
+.now { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.now.air { border-color: var(--air); box-shadow: 0 0 0 1px var(--air) inset; }
+.now.ground { border-color: var(--ground); }
+.state { display: inline-flex; align-items: center; gap: 8px; }
+.air .state { color: var(--air); }
+.ground .state { color: var(--ground); }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+.air .dot, .bar .live { animation: pulse 1.8s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .air .dot, .bar .live { animation: none; } }
+.now h2 { font-size: 34px; line-height: 1.05; }
+.now h2 .arrow { color: var(--muted); font-weight: 500; padding-inline: .15em; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px 20px; margin: 0; }
+.facts div { min-width: 0; }
+.facts dt { font-family: var(--font-data); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.facts dd { margin: 2px 0 0; font-weight: 500; }
+.facts dd small { display: block; color: var(--muted); font-weight: 400; font-size: 13px; }
+.pbar { height: 8px; background: var(--air-soft); border-radius: 4px; overflow: hidden; }
+.pbar > i { display: block; height: 100%; background: var(--air); }
+.barlabels { display: flex; justify-content: space-between; font-family: var(--font-data); font-size: 12px; color: var(--muted); }
+.fr { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+a.btn { display: inline-block; background: var(--air); color: var(--on-air); text-decoration: none; font-weight: 600; padding: 10px 15px; border-radius: 8px; }
+a.btn:hover { filter: brightness(1.08); }
+a.btn.alt { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+a:focus-visible, summary:focus-visible, button:focus-visible { outline: 3px solid var(--air); outline-offset: 2px; }
+.flightno { font-family: var(--font-display); font-size: 26px; font-weight: 700; letter-spacing: .02em; }
+.note { color: var(--muted); font-size: 13px; margin: 0; }
+
+/* calendar */
+.cal { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 12px 12px; display: flex; flex-direction: column; gap: 10px; }
+.calhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding-inline: 4px; }
+.calhead h2 { font-size: 30px; }
+.nav { display: flex; gap: 6px; }
+.nav button { font: inherit; font-weight: 500; background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+.nav button:hover:not(:disabled) { border-color: var(--ink); }
+.nav button:disabled { opacity: .35; cursor: default; }
+.dows, .week .bgrid, .week .cgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.dows div { font-family: var(--font-data); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); text-align: center; padding-bottom: 4px; }
+.weeks { border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+.week { position: relative; min-height: 92px; }
+.week .bgrid { position: absolute; inset: 0; }
+.week .bgrid i { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.week .bgrid i.today { background: var(--today); }
+.week .cgrid { position: relative; grid-template-rows: 24px; }
+.week .lanes { position: relative; margin-top: 3px; }
+.dn { font-family: var(--font-data); font-size: 12px; padding: 4px 6px 0; color: var(--ink); }
+.dn.out { color: var(--muted); opacity: .55; }
+.dn.today b { background: var(--ink); color: var(--surface); border-radius: 10px; padding: 1px 6px; font-weight: 500; }
+.bar { position: absolute; height: 26px; font: inherit; font-size: 12.5px; font-weight: 600; text-align: left; border: 0; border-radius: 6px; padding: 0 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; overflow: hidden; color: var(--on-t); }
+.bar.cl { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.bar.cr { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.bar.sel { outline: 2px solid var(--ink); outline-offset: 1px; }
+.bar .bt { overflow: hidden; text-overflow: ellipsis; }
+.bar .bt em { font-style: normal; font-weight: 500; opacity: .9; font-family: var(--font-data); font-size: 11px; margin-left: 4px; }
+.bar .live { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+.c0 { background: var(--t0); } .c1 { background: var(--t1); } .c2 { background: var(--t2); }
+.c3 { background: var(--t3); } .c4 { background: var(--t4); } .c5 { background: var(--t5); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; padding-inline: 4px; }
+.chip { font: inherit; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 7px; background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 16px; padding: 4px 11px 4px 8px; cursor: pointer; }
+.chip i { width: 10px; height: 10px; border-radius: 3px; }
+.chip.sel { border-color: var(--ink); }
+
+/* trip detail */
+.trip { background: var(--surface); border: 1px solid var(--line); border-top-width: 5px; border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.trip.c0 { border-top-color: var(--t0); } .trip.c1 { border-top-color: var(--t1); } .trip.c2 { border-top-color: var(--t2); }
+.trip.c3 { border-top-color: var(--t3); } .trip.c4 { border-top-color: var(--t4); } .trip.c5 { border-top-color: var(--t5); }
+.thead { display: flex; justify-content: space-between; gap: 6px 16px; flex-wrap: wrap; align-items: baseline; }
+.thead h3 { font-size: 26px; }
+.thead span { font-family: var(--font-data); font-size: 12px; color: var(--muted); }
+.legs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.leg { display: grid; grid-template-columns: 110px 1fr; gap: 2px 14px; padding: 9px 0; border-top: 1px solid var(--line); }
+.leg .fn { font-family: var(--font-data); font-weight: 500; }
+.leg .fn a { color: var(--ink); text-decoration-color: var(--air); text-underline-offset: 3px; }
+.leg .fn .tag { display: block; font-size: 11px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.leg .rt { min-width: 0; }
+.leg .rt b { font-weight: 600; }
+.leg .rt .tm { display: block; font-family: var(--font-data); font-size: 12.5px; color: var(--muted); }
+.leg .lay { grid-column: 2; font-size: 13px; color: var(--ground); }
+.leg.done { opacity: .6; }
+.leg.live { background: var(--air-soft); margin-inline: -16px; padding-inline: 16px; }
+footer p { color: var(--muted); font-size: 13px; margin: 0 0 6px; }
+@media (max-width: 560px) {
+  .bar .bt em { display: none; }
+  .bar { padding: 0 5px; font-size: 11.5px; }
+  .calhead h2 { font-size: 26px; }
+  .week { min-height: 78px; }
+  .dows div { font-size: 10px; letter-spacing: 0; }
+}
+@media (max-width: 440px) {
+  .now h2 { font-size: 28px; }
+  .leg { grid-template-columns: 1fr; }
+  .leg .lay { grid-column: 1; }
+  .cal { padding-inline: 6px; }
+}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <h1>Matt's Flight Schedule</h1>
+    <div class="clock" id="clock"></div>
+  </div>
+  <section id="now" class="now" aria-live="polite"></section>
+  <section class="cal" aria-label="Trip calendar">
+    <div class="calhead">
+      <h2 id="monthlabel"></h2>
+      <div class="nav">
+        <button id="prev" type="button" aria-label="Previous month">&larr; Prev</button>
+        <button id="today" type="button">Today</button>
+        <button id="next" type="button" aria-label="Next month">Next &rarr;</button>
+      </div>
+    </div>
+    <div>
+      <div class="dows"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
+      <div class="weeks" id="weeks"></div>
+    </div>
+    <div class="chips" id="chips"></div>
+  </section>
+  <section id="detail"></section>
+  <footer>
+    <p>Calendar days use your time zone, so a trip can start a day earlier or later than Matt's own calendar. Flight times show in the airport's local time.</p>
+    <p>Schedule loaded Oct 2, 2026 from Matt's trip recaps. Delays, reroutes and trip swaps show here only after Matt updates the page. A live map appears on Flightradar24 only while the flight is airborne.</p>
+  </footer>
+</div>
+
+<script>
+const AP = {
+  ANC: ['Anchorage', 'America/Anchorage'], IND: ['Indianapolis', 'America/Indiana/Indianapolis'],
+  MSP: ['Minneapolis', 'America/Chicago'], CAN: ['Guangzhou', 'Asia/Shanghai'], SIN: ['Singapore', 'Asia/Singapore'],
+  KIX: ['Osaka', 'Asia/Tokyo'], ICN: ['Seoul', 'Asia/Seoul'], NRT: ['Tokyo Narita', 'Asia/Tokyo'],
+  TPE: ['Taipei', 'Asia/Taipei'], OAK: ['Oakland', 'America/Los_Angeles'], SFO: ['San Francisco', 'America/Los_Angeles']
+};
+const CS = { FX: 'FDX', DL: 'DAL', UA: 'UAL' };
+const T = s => Date.parse(s);
+function L(carrier, num, from, to, dep, arr, block, o) {
+  return Object.assign({ carrier, num, from, to, dep: T(dep), arr: T(arr), block, type: 'op' }, o || {});
+}
+const TRIPS = [
+  { id: 'Trip 38', show: T('2026-08-31T04:00Z'), end: T('2026-09-03T08:44Z'), legs: [
+    L('FX', null, 'ANC', 'ICN', '2026-08-31T05:00Z', '2026-08-31T14:15Z', '9:15', { lay: '21:10 layover' }),
+    L('FX', null, 'ICN', 'KIX', '2026-09-01T12:55Z', '2026-09-01T14:51Z', '1:56', { lay: '32:27 layover' }),
+    L('FX', null, 'KIX', 'ANC', '2026-09-03T00:48Z', '2026-09-03T08:14Z', '7:26')
+  ]},
+  { id: 'Trip 87', show: T('2026-09-09T02:42Z'), end: T('2026-09-18T08:06Z'), legs: [
+    L('FX', '6409', 'ANC', 'NRT', '2026-09-09T04:05Z', '2026-09-09T12:16Z', '8:11', { lay: '15:59 layover' }),
+    L('FX', '295', 'NRT', 'TPE', '2026-09-10T05:49Z', '2026-09-10T09:22Z', '3:33', { lay: '25:53 layover' }),
+    L('FX', '14', 'TPE', 'KIX', '2026-09-11T12:58Z', '2026-09-11T15:32Z', '2:34', { lay: '46:28 layover' }),
+    L('FX', '6076', 'KIX', 'CAN', '2026-09-13T15:16Z', '2026-09-13T18:49Z', '3:33', { lay: '50:26 layover, extended' }),
+    L('FX', null, 'CAN', 'CAN', '2026-09-15T21:45Z', '2026-09-16T01:35Z', '', { type: 'sby', lay: '17:00 rest' }),
+    L('FX', '6028', 'CAN', 'KIX', '2026-09-16T19:40Z', '2026-09-16T23:14Z', '3:34', { lay: '24:04 layover' }),
+    L('FX', '60', 'KIX', 'ANC', '2026-09-17T00:31Z', '2026-09-18T07:36Z', '7:05')
+  ]},
+  { id: 'Trip 59', show: T('2026-10-01T09:30Z'), end: T('2026-10-03T09:15Z'), legs: [
+    L('FX', '6014', 'ANC', 'IND', '2026-10-01T10:30Z', '2026-10-01T16:28Z', '5:58', { lay: '29:30 layover' }),
+    L('DL', '1456', 'IND', 'MSP', '2026-10-02T23:28Z', '2026-10-03T01:21Z', '1:53', { type: 'dh' }),
+    L('DL', '411', 'MSP', 'ANC', '2026-10-03T02:59Z', '2026-10-03T08:45Z', '5:46', { type: 'dh' })
+  ]},
+  { id: 'Trip 8', show: T('2026-10-04T07:12Z'), end: T('2026-10-07T21:56Z'), legs: [
+    L('FX', '6031', 'ANC', 'CAN', '2026-10-04T08:12Z', '2026-10-04T20:33Z', '12:21', { lay: '21:17 layover' }),
+    L('FX', '5419', 'CAN', 'SIN', '2026-10-05T19:20Z', '2026-10-05T23:28Z', '4:08', { lay: '31:57 layover' }),
+    L('FX', '5601', 'SIN', 'ANC', '2026-10-07T08:55Z', '2026-10-07T21:26Z', '12:31')
+  ]},
+  { id: 'Trip 87', show: T('2026-10-22T19:01Z'), end: T('2026-10-24T08:53Z'), legs: [
+    L('FX', '5205', 'ANC', 'KIX', '2026-10-22T20:01Z', '2026-10-23T04:50Z', '8:49', { lay: '18:45 layover' }),
+    L('FX', '5178', 'KIX', 'ANC', '2026-10-24T01:05Z', '2026-10-24T08:23Z', '7:18')
+  ]},
+  { id: 'Trip 127', show: T('2026-10-25T03:20Z'), end: T('2026-10-27T15:43Z'), legs: [
+    L('FX', '94', 'ANC', 'OAK', '2026-10-25T04:20Z', '2026-10-25T08:52Z', '4:32', { lay: '18:01 layover' }),
+    L('FX', null, 'OAK', 'SFO', '2026-10-26T03:23Z', '2026-10-26T04:53Z', '1:30', { type: 'gnd' }),
+    L('UA', '233', 'SFO', 'IND', '2026-10-26T05:53Z', '2026-10-26T10:12Z', '4:19', { type: 'dh', lay: '20:39 layover' }),
+    L('FX', '29', 'IND', 'ANC', '2026-10-27T08:21Z', '2026-10-27T15:13Z', '6:52')
+  ]}
+];
+TRIPS.sort((a, b) => a.show - b.show);
+const ALL = TRIPS.flatMap(t => t.legs.map(l => Object.assign({ trip: t }, l)));
+
+/* ---------- helpers ---------- */
+const VIEWER_TZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return 'UTC'; } })();
+function fmt(ms, tz, withDay) {
+  const o = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short', timeZone: tz };
+  if (withDay !== false) { o.weekday = 'short'; o.month = 'short'; o.day = 'numeric'; }
+  return new Intl.DateTimeFormat('en-US', o).format(ms);
+}
+function dur(ms) {
+  const m = Math.max(0, Math.round(ms / 60000));
+  const d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60), mm = m % 60;
+  if (d) return d + ' d ' + h + ' h';
+  if (h) return h + ' h ' + mm + ' m';
+  return mm + ' m';
+}
+function flightLabel(l) { return l.num ? l.carrier + ' ' + l.num : null; }
+function liveUrl(l) { return 'https://www.flightradar24.com/' + CS[l.carrier] + l.num; }
+function histUrl(l) { return 'https://www.flightradar24.com/data/flights/' + (l.carrier + l.num).toLowerCase(); }
+function city(c) { return AP[c][0]; }
+function tz(c) { return AP[c][1]; }
+function timeBlock(ms, code) {
+  return '<dd>' + fmt(ms, tz(code)) + '<small>' + fmt(ms, VIEWER_TZ) + ' your time</small></dd>';
+}
+function routeOf(t) {
+  const r = [t.legs[0].from];
+  t.legs.forEach(l => { if (r[r.length - 1] !== l.to) r.push(l.to); });
+  return r.join('-');
+}
+
+/* ---------- where is Matt ---------- */
+function status(now) {
+  const cur = ALL.find(l => l.dep <= now && now < l.arr);
+  if (cur) return { k: 'leg', leg: cur };
+  const inTrip = TRIPS.find(t => t.show <= now && now < t.end);
+  if (inTrip) {
+    const prev = inTrip.legs.slice().reverse().find(l => l.arr <= now);
+    const next = inTrip.legs.find(l => l.dep > now);
+    if (!prev) return { k: 'report', trip: inTrip, next };
+    if (!next) return { k: 'release', trip: inTrip, prev };
+    return { k: 'layover', trip: inTrip, prev, next };
+  }
+  return { k: 'off', nextTrip: TRIPS.find(t => t.show > now), lastTrip: TRIPS.slice().reverse().find(t => t.end <= now) };
+}
+function flightLink(l, cls) {
+  if (!l.num) return '';
+  return '<a class="btn ' + (cls || '') + '" href="' + liveUrl(l) + '" target="_blank" rel="noopener">Watch ' + flightLabel(l) + ' live on Flightradar24 &nearr;</a>';
+}
+function renderNow(now) {
+  const el = document.getElementById('now');
+  const s = status(now);
+  let h = '';
+  if (s.k === 'leg') {
+    const l = s.leg, pct = Math.min(100, Math.max(0, (now - l.dep) / (l.arr - l.dep) * 100));
+    if (l.type === 'sby') {
+      el.className = 'now ground';
+      h = '<div class="eyebrow state"><span class="dot"></span>On standby duty</div>' +
+        '<h2>' + city(l.from) + '</h2>' +
+        '<dl class="facts"><div><dt>Standby ends</dt>' + timeBlock(l.arr, l.to) + '</div></dl>';
+    } else if (l.type === 'gnd') {
+      el.className = 'now ground';
+      h = '<div class="eyebrow state"><span class="dot"></span>Ground transfer</div>' +
+        '<h2>' + city(l.from) + '<span class="arrow">&rarr;</span>' + city(l.to) + '</h2>' +
+        '<dl class="facts"><div><dt>Arrives</dt>' + timeBlock(l.arr, l.to) + '</div></dl>';
+    } else {
+      el.className = 'now air';
+      const dh = l.type === 'dh';
+      h = '<div class="eyebrow state"><span class="dot"></span>' + (dh ? 'Riding as a passenger' : 'In the air') + '</div>' +
+        '<h2>' + city(l.from) + '<span class="arrow">&rarr;</span>' + city(l.to) + '</h2>' +
+        '<div class="fr"><span class="flightno">' + flightLabel(l) + '</span>' + flightLink(l) + '</div>' +
+        '<div><div class="pbar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(pct) + '"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
+        '<div class="barlabels"><span>' + dur(now - l.dep) + ' flown</span><span>' + dur(l.arr - now) + ' to go</span></div></div>' +
+        '<dl class="facts"><div><dt>Departed ' + l.from + '</dt>' + timeBlock(l.dep, l.from) + '</div>' +
+        '<div><dt>Scheduled arrival ' + l.to + '</dt>' + timeBlock(l.arr, l.to) + '</div></dl>';
+    }
+  } else if (s.k === 'layover') {
+    el.className = 'now ground';
+    const p = s.prev, n = s.next, here = p.to;
+    h = '<div class="eyebrow state"><span class="dot"></span>' + (p.lay ? 'On layover' : 'Connecting') + '</div>' +
+      '<h2>' + city(here) + '</h2>' +
+      '<dl class="facts">' +
+      '' +
+      '<div><dt>Local time there</dt><dd>' + fmt(now, tz(here)) + '</dd></div>' +
+      '<div><dt>Landed</dt>' + timeBlock(p.arr, here) + '</div>' +
+      '<div><dt>Next flight in ' + dur(n.dep - now) + '</dt><dd>' + (flightLabel(n) || (city(n.from) + ' to ' + city(n.to))) + ', ' + n.from + ' to ' + n.to + '<small>' + fmt(n.dep, tz(n.from)) + '<br>' + fmt(n.dep, VIEWER_TZ) + ' your time</small></dd></div></dl>' +
+      (n.num ? '<div class="fr">' + flightLink(n, 'alt') + '</div>' : '');
+  } else if (s.k === 'report') {
+    el.className = 'now ground';
+    const f = s.next;
+    h = '<div class="eyebrow state"><span class="dot"></span>Reporting for ' + s.trip.id + '</div>' +
+      '<h2>' + city(f.from) + '</h2>' +
+      '<dl class="facts"><div><dt>First flight in ' + dur(f.dep - now) + '</dt><dd>' + (flightLabel(f) || '') + ' ' + f.from + ' to ' + f.to + '<small>' + fmt(f.dep, tz(f.from)) + '</small></dd></div></dl>' +
+      (f.num ? '<div class="fr">' + flightLink(f, 'alt') + '</div>' : '');
+  } else if (s.k === 'release') {
+    el.className = 'now ground';
+    h = '<div class="eyebrow state"><span class="dot"></span>' + s.trip.id + ' finishing</div><h2>' + city(s.prev.to) + '</h2>' +
+      '<dl class="facts"><div><dt>Released</dt><dd>' + fmt(s.trip.end, tz(s.prev.to)) + '</dd></div></dl>';
+  } else {
+    el.className = 'now';
+    const n = s.nextTrip;
+    h = '<div class="eyebrow state"><span class="dot" style="opacity:.4"></span>Between trips</div>' +
+      '<h2>Not on a trip</h2>' +
+      (n ? '<dl class="facts"><div><dt>Next: ' + n.id + ' in ' + dur(n.show - now) + '</dt><dd>' + fmt(n.show, tz(n.legs[0].from)) + '<small>Report at ' + city(n.legs[0].from) + ' &middot; ' + fmt(n.show, VIEWER_TZ) + ' your time</small></dd></div></dl>'
+        : '<p class="note">No further trips are loaded yet.</p>');
+  }
+  el.innerHTML = h;
+  document.getElementById('clock').textContent = 'Updated ' + fmt(now, VIEWER_TZ, false);
+}
+
+/* ---------- calendar ---------- */
+const DF = new Intl.DateTimeFormat('en-CA', { timeZone: VIEWER_TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
+const TF = new Intl.DateTimeFormat('en-US', { timeZone: VIEWER_TZ, hour: 'numeric', minute: 'numeric', hourCycle: 'h23' });
+function ord(y, m, d) { return Math.floor(Date.UTC(y, m, d) / 864e5); }
+function dayFrac(ms) {
+  const p = TF.formatToParts(ms);
+  const h = +p.find(x => x.type === 'hour').value % 24, m = +p.find(x => x.type === 'minute').value;
+  return dayOrd(ms) + (h * 60 + m) / 1440;
+}
+function dayOrd(ms) {
+  const p = DF.formatToParts(ms);
+  const g = t => +p.find(x => x.type === t).value;
+  return ord(g('year'), g('month') - 1, g('day'));
+}
+const MIN = { y: 2026, m: 7 }, MAX = { y: 2026, m: 11 };
+let view = null, selected = 0;
+
+function defaultSelected(now) {
+  let i = TRIPS.findIndex(t => t.show <= now && now < t.end);
+  if (i < 0) i = TRIPS.findIndex(t => t.end > now);
+  return i < 0 ? TRIPS.length - 1 : i;
+}
+function renderCal(now) {
+  const first = ord(view.y, view.m, 1);
+  const dim = new Date(Date.UTC(view.y, view.m + 1, 0)).getUTCDate();
+  const dow = new Date(first * 864e5).getUTCDay();
+  const nWeeks = Math.ceil((dow + dim) / 7);
+  const todayO = dayOrd(now);
+  const spans = TRIPS.map((t, i) => ({ t, i, s: dayOrd(t.show), e: dayOrd(t.end), fs: dayFrac(t.show), fe: dayFrac(t.end) }));
+  let html = '';
+  for (let w = 0; w < nWeeks; w++) {
+    const ws = first - dow + w * 7;
+    const segs = spans.filter(x => x.s <= ws + 6 && x.e >= ws).sort((a, b) => a.fs - b.fs);
+    const lanes = [];
+    const placed = segs.map(x => {
+      const a = Math.max(x.fs, ws), b = Math.min(x.fe, ws + 7);
+      let ln = lanes.findIndex(le => le <= a + 0.001);
+      if (ln < 0) { ln = lanes.length; lanes.push(b); } else { lanes[ln] = b; }
+      return Object.assign({ a, b, ln }, x);
+    });
+    html += '<div class="week"><div class="bgrid">';
+    for (let c = 0; c < 7; c++) html += '<i' + (ws + c === todayO ? ' class="today"' : '') + '></i>';
+    html += '</div><div class="cgrid">';
+    for (let c = 0; c < 7; c++) {
+      const o = ws + c, dt = new Date(o * 864e5);
+      const inM = dt.getUTCMonth() === view.m;
+      const num = dt.getUTCDate();
+      html += '<div class="dn' + (inM ? '' : ' out') + (o === todayO ? ' today' : '') + '" style="grid-column:' + (c + 1) + ';grid-row:1">' + (o === todayO ? '<b>' + num + '</b>' : num) + '</div>';
+    }
+    html += '</div><div class="lanes" style="height:' + (Math.max(lanes.length, 1) * 29 + 6) + 'px">';
+    placed.forEach(p => {
+      const cur = p.t.show <= now && now < p.t.end;
+      const cls = 'bar c' + (p.i % 6) + (p.s < ws ? ' cl' : '') + (p.e > ws + 6 ? ' cr' : '') + (p.i === selected ? ' sel' : '');
+      const left = (p.a - ws) / 7 * 100, width = (p.b - p.a) / 7 * 100;
+      html += '<button type="button" class="' + cls + '" data-i="' + p.i + '" style="left:min(calc(' + left.toFixed(3) + '% + 2px),calc(100% - 6px));width:max(calc(' + width.toFixed(3) + '% - 4px),6px);top:' + (p.ln * 29) + 'px" title="' + p.t.id + ' ' + routeOf(p.t) + ': ' + fmt(p.t.show, VIEWER_TZ) + ' to ' + fmt(p.t.end, VIEWER_TZ) + '">' +
+        (cur ? '<span class="live"></span>' : '') + '<span class="bt">' + p.t.id + '<em>' + routeOf(p.t) + '</em></span></button>';
+    });
+    html += '</div></div>';
+  }
+  document.getElementById('weeks').innerHTML = html;
+  document.getElementById('monthlabel').textContent = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(Date.UTC(view.y, view.m, 1));
+  document.getElementById('prev').disabled = view.y === MIN.y && view.m <= MIN.m;
+  document.getElementById('next').disabled = view.y === MAX.y && view.m >= MAX.m;
+  // chips for trips visible in this grid
+  const gs = first - dow, ge = gs + nWeeks * 7 - 1;
+  document.getElementById('chips').innerHTML = spans.filter(x => x.s <= ge && x.e >= gs).map(x =>
+    '<button type="button" class="chip' + (x.i === selected ? ' sel' : '') + '" data-i="' + x.i + '"><i class="c' + (x.i % 6) + '"></i>' + x.t.id + ' &middot; ' + routeOf(x.t) + '</button>').join('') || '<span class="note">No trips this month.</span>';
+}
+
+/* ---------- trip detail ---------- */
+function legRow(l, now) {
+  const state = now >= l.arr ? 'done' : (now >= l.dep ? 'live' : '');
+  const fn = l.num ? '<a href="' + (now >= l.arr ? histUrl(l) : liveUrl(l)) + '" target="_blank" rel="noopener">' + flightLabel(l) + '</a>' : (l.type === 'gnd' ? 'Ground' : l.type === 'sby' ? 'Standby' : 'FX');
+  const tag = l.type === 'dh' ? 'Deadhead' : l.type === 'gnd' ? 'Deadhead, van' : l.type === 'sby' ? 'Standby duty' : '';
+  return '<li class="leg ' + state + '"><div class="fn">' + fn + (tag ? '<span class="tag">' + tag + '</span>' : '') + '</div>' +
+    '<div class="rt"><b>' + city(l.from) + ' &rarr; ' + city(l.to) + '</b> <span class="tm">' + l.from + ' ' + fmt(l.dep, tz(l.from)) + '<br>' + l.to + ' ' + fmt(l.arr, tz(l.to)) + (l.block ? ' &middot; block ' + l.block : '') + '</span></div>' +
+    (l.lay ? '<div class="lay">' + l.lay + (l.hotel ? ' at ' + l.hotel : '') + '</div>' : '') + '</li>';
+}
+function renderDetail(now) {
+  const t = TRIPS[selected];
+  const f = d => new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: VIEWER_TZ }).format(d);
+  document.getElementById('detail').innerHTML = '<article class="trip c' + (selected % 6) + '"><div class="thead"><h3>' + t.id + ' &middot; ' + routeOf(t) + '</h3><span>' + f(t.show) + ' to ' + f(t.end) + ' (your time)</span></div><ul class="legs">' + t.legs.map(l => legRow(l, now)).join('') + '</ul></article>';
+}
+
+function renderAll() { const now = Date.now(); renderNow(now); renderCal(now); renderDetail(now); }
+function pick(i) { selected = i; renderAll(); }
+function shift(n) {
+  let m = view.m + n, y = view.y;
+  if (m < 0) { m = 11; y--; } else if (m > 11) { m = 0; y++; }
+  view = { y, m }; renderAll();
+}
+document.getElementById('weeks').addEventListener('click', e => { const b = e.target.closest('.bar'); if (b) pick(+b.dataset.i); });
+document.getElementById('chips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b) pick(+b.dataset.i); });
+document.getElementById('prev').addEventListener('click', () => shift(-1));
+document.getElementById('next').addEventListener('click', () => shift(1));
+document.getElementById('today').addEventListener('click', () => {
+  const p = DF.formatToParts(Date.now());
+  view = { y: +p.find(x => x.type === 'year').value, m: +p.find(x => x.type === 'month').value - 1 };
+  selected = defaultSelected(Date.now()); renderAll();
+});
+(() => {
+  const now = Date.now(), p = DF.formatToParts(now);
+  view = { y: +p.find(x => x.type === 'year').value, m: +p.find(x => x.type === 'month').value - 1 };
+  selected = defaultSelected(now);
+  renderAll();
+  setInterval(() => { const n = Date.now(); renderNow(n); renderCal(n); renderDetail(n); }, 30000);
+})();
+</script>
+
+</head>
