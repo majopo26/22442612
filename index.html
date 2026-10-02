@@ -21,7 +21,7 @@
   --air-soft: #FDEADF;
   --on-air: #FFFFFF;
   --ground: #0F6B5F;
-  --t0: #1D5FA8; --t1: #8A3FA0; --t2: #0F6B5F; --t3: #B4531A; --t4: #A12D4B; --t5: #5B6B1F; --t6: #5B6672;
+  --t0: #1D5FA8; --t1: #8A3FA0; --t2: #0F6B5F; --t3: #B4531A; --t4: #A12D4B; --t5: #5B6B1F; --t6: #5B6672; --t7: #8F6200;
   --on-t: #FFFFFF;
   --today: #FFF3C4;
   --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
@@ -32,7 +32,7 @@
   :root:not([data-theme="light"]) {
     --bg: #0C141C; --surface: #141F2A; --ink: #E7EDF2; --muted: #93A2B0; --line: #263544;
     --air: #FF8A4C; --air-soft: #3A2315; --on-air: #1A0D04; --ground: #4FD1BC;
-    --t0: #7DB4F0; --t1: #D3A0E6; --t2: #4FD1BC; --t3: #F2A36B; --t4: #F08FA9; --t5: #BFD36A; --t6: #9AA7B4;
+    --t0: #7DB4F0; --t1: #D3A0E6; --t2: #4FD1BC; --t3: #F2A36B; --t4: #F08FA9; --t5: #BFD36A; --t6: #9AA7B4; --t7: #F2C14E;
     --on-t: #0B1218; --today: #3A3414;
     color-scheme: dark;
   }
@@ -40,7 +40,7 @@
 :root[data-theme="dark"] {
   --bg: #0C141C; --surface: #141F2A; --ink: #E7EDF2; --muted: #93A2B0; --line: #263544;
   --air: #FF8A4C; --air-soft: #3A2315; --on-air: #1A0D04; --ground: #4FD1BC;
-  --t0: #7DB4F0; --t1: #D3A0E6; --t2: #4FD1BC; --t3: #F2A36B; --t4: #F08FA9; --t5: #BFD36A; --t6: #9AA7B4;
+  --t0: #7DB4F0; --t1: #D3A0E6; --t2: #4FD1BC; --t3: #F2A36B; --t4: #F08FA9; --t5: #BFD36A; --t6: #9AA7B4; --t7: #F2C14E;
   --on-t: #0B1218; --today: #3A3414;
   color-scheme: dark;
 }
@@ -109,7 +109,7 @@ a:focus-visible, summary:focus-visible, button:focus-visible { outline: 3px soli
 .bar .bt em { font-style: normal; font-weight: 500; opacity: .9; font-family: var(--font-data); font-size: 11px; margin-left: 4px; }
 .bar .live { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
 .c0 { background: var(--t0); } .c1 { background: var(--t1); } .c2 { background: var(--t2); }
-.c3 { background: var(--t3); } .c4 { background: var(--t4); } .c5 { background: var(--t5); } .c6 { background: var(--t6); }
+.c3 { background: var(--t3); } .c4 { background: var(--t4); } .c5 { background: var(--t5); } .c6 { background: var(--t6); } .c7 { background: var(--t7); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; padding-inline: 4px; }
 .chip { font: inherit; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 7px; background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 16px; padding: 4px 11px 4px 8px; cursor: pointer; }
 .chip i { width: 10px; height: 10px; border-radius: 3px; }
@@ -118,7 +118,7 @@ a:focus-visible, summary:focus-visible, button:focus-visible { outline: 3px soli
 /* trip detail */
 .trip { background: var(--surface); border: 1px solid var(--line); border-top-width: 5px; border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
 .trip.c0 { border-top-color: var(--t0); } .trip.c1 { border-top-color: var(--t1); } .trip.c2 { border-top-color: var(--t2); }
-.trip.c3 { border-top-color: var(--t3); } .trip.c4 { border-top-color: var(--t4); } .trip.c5 { border-top-color: var(--t5); } .trip.c6 { border-top-color: var(--t6); }
+.trip.c3 { border-top-color: var(--t3); } .trip.c4 { border-top-color: var(--t4); } .trip.c5 { border-top-color: var(--t5); } .trip.c6 { border-top-color: var(--t6); } .trip.c7 { border-top-color: var(--t7); }
 .thead { display: flex; justify-content: space-between; gap: 6px 16px; flex-wrap: wrap; align-items: baseline; }
 .thead h3 { font-size: 26px; }
 .thead span { font-family: var(--font-data); font-size: 12px; color: var(--muted); }
@@ -220,6 +220,9 @@ const TRIPS = [
     L('FX', null, 'MEM', 'MEM', '2026-10-08T06:43Z', '2026-10-09T19:00Z', '', { type: 'stay', label: 'Memphis condo' }),
     L('FX', null, 'MEM', 'OKC', '2026-10-09T19:00Z', '2026-10-09T19:00Z', '', { type: 'dh', tbd: true })
   ]},
+  { id: 'Honeymoon', honeymoon: true, show: T('2026-10-11T05:00Z'), end: T('2026-10-21T04:59Z'), legs: [
+    L('FX', null, 'OKC', 'OKC', '2026-10-11T05:00Z', '2026-10-21T04:59Z', '', { type: 'stay', away: true, label: 'Honeymoon' })
+  ]},
   { id: 'Trip 87', show: T('2026-10-22T19:01Z'), end: T('2026-10-24T08:53Z'), legs: [
     L('FX', '5205', 'ANC', 'KIX', '2026-10-22T20:01Z', '2026-10-23T04:50Z', '8:49', { lay: '18:45 layover' }),
     L('FX', '5178', 'KIX', 'ANC', '2026-10-24T01:05Z', '2026-10-24T08:23Z', '7:18')
@@ -232,7 +235,7 @@ const TRIPS = [
   ]}
 ];
 TRIPS.sort((a, b) => a.show - b.show);
-{ let k = 0; TRIPS.forEach(t => { t.ci = t.commute ? 6 : (k++ % 6); }); }
+{ let k = 0; TRIPS.forEach(t => { t.ci = t.commute ? 6 : t.honeymoon ? 7 : (k++ % 6); }); }
 const ALL = TRIPS.flatMap(t => t.legs.map(l => Object.assign({ trip: t }, l)));
 
 /* ---------- helpers ---------- */
@@ -258,6 +261,7 @@ function timeBlock(ms, code) {
   return '<dd>' + fmt(ms, tz(code)) + '<small>' + fmt(ms, VIEWER_TZ) + ' your time</small></dd>';
 }
 function routeOf(t) {
+  if (t.honeymoon) return '';
   const r = [t.legs[0].from];
   t.legs.forEach(l => { if (r[r.length - 1] !== l.to) r.push(l.to); });
   return r.join('-');
@@ -287,7 +291,11 @@ function renderNow(now) {
   let h = '';
   if (s.k === 'leg') {
     const l = s.leg, pct = Math.min(100, Math.max(0, (now - l.dep) / (l.arr - l.dep) * 100));
-    if (l.type === 'stay') {
+    if (l.away) {
+      el.className = 'now ground';
+      h = '<div class="eyebrow state"><span class="dot"></span>Away</div><h2>' + l.label + '</h2>' +
+        '<dl class="facts"><div><dt>Back</dt><dd>' + fmt(l.arr, tz(l.to)) + '<small>' + fmt(l.arr, VIEWER_TZ) + ' your time</small></dd></div></dl>';
+    } else if (l.type === 'stay') {
       el.className = 'now ground';
       const nx = l.trip.legs.find(x => x !== l && x.dep >= l.arr);
       h = '<div class="eyebrow state"><span class="dot"></span>At home base</div>' +
@@ -342,7 +350,7 @@ function renderNow(now) {
     const n = s.nextTrip;
     h = '<div class="eyebrow state"><span class="dot" style="opacity:.4"></span>Between trips</div>' +
       '<h2>Not on a trip</h2>' +
-      (n ? '<dl class="facts"><div><dt>Next: ' + n.id + ' in ' + dur(n.show - now) + '</dt><dd>' + fmt(n.show, tz(n.legs[0].from)) + '<small>Report at ' + city(n.legs[0].from) + ' &middot; ' + fmt(n.show, VIEWER_TZ) + ' your time</small></dd></div></dl>'
+      (n ? '<dl class="facts"><div><dt>Next: ' + n.id + ' in ' + dur(n.show - now) + '</dt><dd>' + fmt(n.show, tz(n.legs[0].from)) + '<small>' + (n.legs[0].away ? '' : 'Report at ' + city(n.legs[0].from) + ' &middot; ') + fmt(n.show, VIEWER_TZ) + ' your time</small></dd></div></dl>'
         : '<p class="note">No further trips are loaded yet.</p>');
   }
   el.innerHTML = h;
@@ -415,12 +423,13 @@ function renderCal(now) {
   // chips for trips visible in this grid
   const gs = first - dow, ge = gs + nWeeks * 7 - 1;
   document.getElementById('chips').innerHTML = spans.filter(x => x.s <= ge && x.e >= gs).map(x =>
-    '<button type="button" class="chip' + (x.i === selected ? ' sel' : '') + '" data-i="' + x.i + '"><i class="c' + TRIPS[x.i].ci + '"></i>' + x.t.id + ' &middot; ' + routeOf(x.t) + '</button>').join('') || '<span class="note">No trips this month.</span>';
+    '<button type="button" class="chip' + (x.i === selected ? ' sel' : '') + '" data-i="' + x.i + '"><i class="c' + TRIPS[x.i].ci + '"></i>' + x.t.id + (routeOf(x.t) ? ' &middot; ' + routeOf(x.t) : '') + '</button>').join('') || '<span class="note">No trips this month.</span>';
 }
 
 /* ---------- trip detail ---------- */
 function legRow(l, now) {
   const state = now >= l.arr ? 'done' : (now >= l.dep ? 'live' : '');
+  if (l.away) return '<li class="leg ' + state + '"><div class="fn">Away</div><div class="rt"><b>' + l.label + '</b> <span class="tm">From ' + fmt(l.dep, tz(l.from)) + '<br>Until ' + fmt(l.arr, tz(l.to)) + '</span></div></li>';
   if (l.type === 'stay') return '<li class="leg ' + state + '"><div class="fn">Stay<span class="tag">Home</span></div><div class="rt"><b>' + (l.label || city(l.from)) + '</b> <span class="tm">Arrive ' + fmt(l.dep, tz(l.from)) + '<br>Until ' + fmt(l.arr, tz(l.to)) + '</span></div></li>';
   if (l.tbd) return '<li class="leg"><div class="fn">FX<span class="tag">Deadhead</span></div><div class="rt"><b>' + city(l.from) + ' &rarr; ' + city(l.to) + '</b> <span class="tm">Departs after ' + fmt(l.dep, tz(l.from), false) + '<br>Flight and time to be added</span></div></li>';
   const fn = l.num ? '<a href="' + (now >= l.arr ? histUrl(l) : liveUrl(l)) + '" target="_blank" rel="noopener">' + flightLabel(l) + '</a>' : (l.type === 'gnd' ? 'Ground' : l.type === 'sby' ? 'Standby' : 'FX');
@@ -432,7 +441,7 @@ function legRow(l, now) {
 function renderDetail(now) {
   const t = TRIPS[selected];
   const f = d => new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: VIEWER_TZ }).format(d);
-  document.getElementById('detail').innerHTML = '<article class="trip c' + t.ci + '"><div class="thead"><h3>' + t.id + ' &middot; ' + routeOf(t) + '</h3><span>' + f(t.show) + ' to ' + f(t.end) + ' (your time)</span></div><ul class="legs">' + t.legs.map(l => legRow(l, now)).join('') + '</ul></article>';
+  document.getElementById('detail').innerHTML = '<article class="trip c' + t.ci + '"><div class="thead"><h3>' + t.id + (routeOf(t) ? ' &middot; ' + routeOf(t) : '') + '</h3><span>' + f(t.show) + ' to ' + f(t.end) + ' (your time)</span></div><ul class="legs">' + t.legs.map(l => legRow(l, now)).join('') + '</ul></article>';
 }
 
 function renderAll() { const now = Date.now(); renderNow(now); renderCal(now); renderDetail(now); }
