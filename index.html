@@ -169,11 +169,12 @@ footer p { color: var(--muted); font-size: 13px; margin: 0 0 6px; }
       <div class="weeks" id="weeks"></div>
     </div>
     <div class="chips" id="chips"></div>
+    <p class="note" id="monthnote" hidden></p>
   </section>
   <section id="detail"></section>
   <footer>
     <p>Calendar days use your time zone, so a trip can start a day earlier or later than Matt's own calendar. Flight times show in the airport's local time.</p>
-    <p>Schedule loaded Oct 2, 2026 from Matt's trip recaps. Delays, reroutes and trip swaps show here only after Matt updates the page. A live map appears on Flightradar24 only while the flight is airborne.</p>
+    <p>Schedule last updated Oct 10, 2026. Delays, reroutes and trip swaps show here only after Matt updates the page. A live map appears on Flightradar24 only while the flight is airborne.</p>
   </footer>
 </div>
 
@@ -220,6 +221,9 @@ const TRIPS = [
     L('FX', null, 'MEM', 'MEM', '2026-10-08T06:43Z', '2026-10-09T19:00Z', '', { type: 'stay', label: 'Memphis condo' }),
     L('FX', null, 'MEM', 'OKC', '2026-10-09T19:00Z', '2026-10-09T19:00Z', '', { type: 'dh', tbd: true })
   ]},
+  { id: 'Vacation', vacation: true, show: T('2026-11-19T06:00Z'), end: T('2026-11-28T05:59Z'), legs: [
+    L('FX', null, 'MEM', 'MEM', '2026-11-19T06:00Z', '2026-11-28T05:59Z', '', { type: 'stay', away: true, label: 'Vacation', eyebrow: 'On vacation' })
+  ]},
   { id: 'Honeymoon', honeymoon: true, show: T('2026-10-11T05:00Z'), end: T('2026-10-21T04:59Z'), legs: [
     L('FX', null, 'OKC', 'OKC', '2026-10-11T05:00Z', '2026-10-21T04:59Z', '', { type: 'stay', away: true, label: 'Honeymoon' })
   ]},
@@ -235,7 +239,7 @@ const TRIPS = [
   ]}
 ];
 TRIPS.sort((a, b) => a.show - b.show);
-{ let k = 0; TRIPS.forEach(t => { t.ci = t.commute ? 6 : t.honeymoon ? 7 : (k++ % 6); }); }
+{ let k = 0; TRIPS.forEach(t => { t.ci = t.commute ? 6 : (t.honeymoon || t.vacation) ? 7 : (k++ % 6); }); }
 const ALL = TRIPS.flatMap(t => t.legs.map(l => Object.assign({ trip: t }, l)));
 
 /* ---------- helpers ---------- */
@@ -261,7 +265,7 @@ function timeBlock(ms, code) {
   return '<dd>' + fmt(ms, tz(code)) + '<small>' + fmt(ms, VIEWER_TZ) + ' your time</small></dd>';
 }
 function routeOf(t) {
-  if (t.honeymoon) return '';
+  if (t.honeymoon || t.vacation) return '';
   const r = [t.legs[0].from];
   t.legs.forEach(l => { if (r[r.length - 1] !== l.to) r.push(l.to); });
   return r.join('-');
@@ -293,8 +297,8 @@ function renderNow(now) {
     const l = s.leg, pct = Math.min(100, Math.max(0, (now - l.dep) / (l.arr - l.dep) * 100));
     if (l.away) {
       el.className = 'now ground';
-      h = '<div class="eyebrow state"><span class="dot"></span>Away</div><h2>' + l.label + '</h2>' +
-        '<dl class="facts"><div><dt>Back</dt><dd>' + fmt(l.arr, tz(l.to)) + '<small>' + fmt(l.arr, VIEWER_TZ) + ' your time</small></dd></div></dl>';
+      h = '<div class="eyebrow state"><span class="dot"></span>' + (l.eyebrow || 'Away') + '</div><h2>' + l.label + '</h2>' +
+        '<dl class="facts"><div><dt>Until</dt><dd>' + fmt(l.arr, tz(l.to)) + '<small>' + fmt(l.arr, VIEWER_TZ) + ' your time</small></dd></div></dl>';
     } else if (l.type === 'stay') {
       el.className = 'now ground';
       const nx = l.trip.legs.find(x => x !== l && x.dep >= l.arr);
@@ -423,7 +427,11 @@ function renderCal(now) {
   // chips for trips visible in this grid
   const gs = first - dow, ge = gs + nWeeks * 7 - 1;
   document.getElementById('chips').innerHTML = spans.filter(x => x.s <= ge && x.e >= gs).map(x =>
-    '<button type="button" class="chip' + (x.i === selected ? ' sel' : '') + '" data-i="' + x.i + '"><i class="c' + TRIPS[x.i].ci + '"></i>' + x.t.id + (routeOf(x.t) ? ' &middot; ' + routeOf(x.t) : '') + '</button>').join('') || '<span class="note">No trips this month.</span>';
+    '<button type="button" class="chip' + (x.i === selected ? ' sel' : '') + '" data-i="' + x.i + '"><i class="c' + TRIPS[x.i].ci + '"></i>' + x.t.id + (routeOf(x.t) ? ' &middot; ' + routeOf(x.t) : '') + '</button>').join('') || '<span class="note">Nothing on the schedule this month.</span>';
+  const hasTrip = spans.some(x => x.s <= ge && x.e >= gs && !TRIPS[x.i].vacation && !TRIPS[x.i].honeymoon && !TRIPS[x.i].commute);
+  const mn = document.getElementById('monthnote');
+  mn.hidden = hasTrip;
+  mn.textContent = hasTrip ? '' : 'No trips are loaded for this month yet. Anything Matt picks up shows here after he updates the page.';
 }
 
 /* ---------- trip detail ---------- */
