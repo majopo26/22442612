@@ -225,6 +225,10 @@ const TRIPS = [
   { id: 'Vacation', vacation: true, show: T('2026-11-19T06:00Z'), end: T('2026-11-28T05:59Z'), legs: [
     L('FX', null, 'MEM', 'MEM', '2026-11-19T06:00Z', '2026-11-28T05:59Z', '', { type: 'stay', away: true, label: 'Vacation', eyebrow: 'On vacation' })
   ]},
+  { id: 'Commute to ANC', commute: true, show: T('2026-10-22T02:40Z'), end: T('2026-10-22T15:21Z'), legs: [
+    L('FX', '1272', 'OKC', 'MEM', '2026-10-22T02:40Z', '2026-10-22T03:59Z', '1:19', { type: 'dh', jump: true }),
+    L('FX', '19', 'MEM', 'ANC', '2026-10-22T08:12Z', '2026-10-22T15:21Z', '7:09', { type: 'dh', jump: true })
+  ]},
   { id: 'Reserve B', reserve: true, show: T('2026-11-30T10:30Z'), end: T('2026-12-06T10:29Z'), legs: [
     L('FX', null, 'ANC', 'ANC', '2026-11-30T10:30Z', '2026-12-06T10:29Z', '', { type: 'stay', res: true, label: 'Reserve B', win: [T('2026-11-30T22:30Z'), T('2026-12-01T10:29Z')] })
   ]},
@@ -366,7 +370,7 @@ function renderNow(now) {
     const n = s.nextTrip;
     h = '<div class="eyebrow state"><span class="dot" style="opacity:.4"></span>Between trips</div>' +
       '<h2>Not on a trip</h2>' +
-      (n ? '<dl class="facts"><div><dt>Next: ' + n.id + ' in ' + dur(n.show - now) + '</dt><dd>' + fmt(n.show, tz(n.legs[0].from)) + '<small>' + (n.legs[0].away ? '' : 'Report at ' + city(n.legs[0].from) + ' &middot; ') + fmt(n.show, VIEWER_TZ) + ' your time</small></dd></div></dl>'
+      (n ? '<dl class="facts"><div><dt>Next: ' + n.id + ' in ' + dur(n.show - now) + '</dt><dd>' + fmt(n.show, tz(n.legs[0].from)) + '<small>' + ((n.legs[0].away || n.commute) ? '' : 'Report at ' + city(n.legs[0].from) + ' &middot; ') + fmt(n.show, VIEWER_TZ) + ' your time</small></dd></div></dl>'
         : '<p class="note">No further trips are loaded yet.</p>');
   }
   el.innerHTML = h;
@@ -454,7 +458,7 @@ function legRow(l, now) {
   if (l.type === 'stay') return '<li class="leg ' + state + '"><div class="fn">Stay<span class="tag">Home</span></div><div class="rt"><b>' + (l.label || city(l.from)) + '</b> <span class="tm">Arrive ' + fmt(l.dep, tz(l.from)) + '<br>Until ' + fmt(l.arr, tz(l.to)) + '</span></div></li>';
   if (l.tbd) return '<li class="leg"><div class="fn">FX<span class="tag">Deadhead</span></div><div class="rt"><b>' + city(l.from) + ' &rarr; ' + city(l.to) + '</b> <span class="tm">Departs after ' + fmt(l.dep, tz(l.from), false) + '<br>Flight and time to be added</span></div></li>';
   const fn = l.num ? '<a href="' + (now >= l.arr ? histUrl(l) : liveUrl(l)) + '" target="_blank" rel="noopener">' + flightLabel(l) + '</a>' : (l.type === 'gnd' ? 'Ground' : l.type === 'sby' ? 'Standby' : 'FX');
-  const tag = l.type === 'dh' ? 'Deadhead' : l.type === 'gnd' ? 'Deadhead, van' : l.type === 'sby' ? 'Standby duty' : '';
+  const tag = l.jump ? 'Jumpseat' : l.type === 'dh' ? 'Deadhead' : l.type === 'gnd' ? 'Deadhead, van' : l.type === 'sby' ? 'Standby duty' : '';
   return '<li class="leg ' + state + '"><div class="fn">' + fn + (tag ? '<span class="tag">' + tag + '</span>' : '') + '</div>' +
     '<div class="rt"><b>' + city(l.from) + ' &rarr; ' + city(l.to) + '</b> <span class="tm">' + l.from + ' ' + fmt(l.dep, tz(l.from)) + '<br>' + l.to + ' ' + fmt(l.arr, tz(l.to)) + (l.block ? ' &middot; block ' + l.block : '') + '</span></div>' +
     (l.lay ? '<div class="lay">' + l.lay + (l.hotel ? ' at ' + l.hotel : '') + '</div>' : '') + '</li>';
