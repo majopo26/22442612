@@ -175,7 +175,7 @@ footer p { color: var(--muted); font-size: 13px; margin: 0 0 6px; }
   <section id="detail"></section>
   <footer>
     <p>Calendar days use your time zone, so a trip can start a day earlier or later than Matt's own calendar. Flight times show in the airport's local time.</p>
-    <p>Schedule last updated Oct 27, 2026. Delays, reroutes and trip swaps show here only after Matt updates the page. A live map appears on Flightradar24 only while the flight is airborne.</p>
+    <p>Schedule last updated Nov 10, 2026. Delays, reroutes and trip swaps show here only after Matt updates the page. A live map appears on Flightradar24 only while the flight is airborne.</p>
   </footer>
 </div>
 
@@ -186,9 +186,9 @@ const AP = {
   KIX: ['Osaka', 'Asia/Tokyo'], ICN: ['Seoul', 'Asia/Seoul'], NRT: ['Tokyo Narita', 'Asia/Tokyo'],
   MEM: ['Memphis', 'America/Chicago'], OKC: ['Oklahoma City', 'America/Chicago'],
   TPE: ['Taipei', 'Asia/Taipei'], OAK: ['Oakland', 'America/Los_Angeles'], SFO: ['San Francisco', 'America/Los_Angeles'],
-  SDF: ['Louisville', 'America/Kentucky/Louisville']
+  SDF: ['Louisville', 'America/Kentucky/Louisville'], SEA: ['Seattle', 'America/Los_Angeles']
 };
-const CS = { FX: 'FDX', DL: 'DAL', UA: 'UAL', '5X': 'UPS' };
+const CS = { FX: 'FDX', DL: 'DAL', UA: 'UAL', '5X': 'UPS', AS: 'ASA', BR: 'EVA' };
 const T = s => Date.parse(s);
 function L(carrier, num, from, to, dep, arr, block, o) {
   return Object.assign({ carrier, num, from, to, dep: T(dep), arr: T(arr), block, type: 'op' }, o || {});
@@ -249,6 +249,12 @@ const TRIPS = [
     L('FX', null, 'OAK', 'SFO', '2026-10-26T03:23Z', '2026-10-26T04:53Z', '1:30', { type: 'gnd' }),
     L('UA', '233', 'SFO', 'IND', '2026-10-26T05:53Z', '2026-10-26T10:12Z', '4:19', { type: 'dh', lay: '20:39 layover' }),
     L('FX', '29', 'IND', 'ANC', '2026-10-27T08:21Z', '2026-10-27T15:13Z', '6:52')
+  ]},
+  { id: 'Trip 5206', show: T('2026-11-13T09:55Z'), end: T('2026-11-17T07:38Z'), legs: [
+    L('AS', '1324', 'ANC', 'SEA', '2026-11-13T11:55Z', '2026-11-13T15:28Z', '3:33', { type: 'dh', lay: '14:12 layover' }),
+    L('BR', '25', 'SEA', 'TPE', '2026-11-14T08:10Z', '2026-11-14T21:20Z', '13:10', { type: 'dh', lay: '24:20 layover' }),
+    L('BR', '707', 'TPE', 'CAN', '2026-11-16T00:10Z', '2026-11-16T02:15Z', '2:05', { type: 'dh', lay: '17:35 layover' }),
+    L('FX', '6172', 'CAN', 'ANC', '2026-11-16T21:20Z', '2026-11-17T07:08Z', '9:48')
   ]}
 ];
 TRIPS.sort((a, b) => a.show - b.show);
